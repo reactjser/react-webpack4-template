@@ -3,9 +3,9 @@ const os = require('os');
 const dns = require('dns');
 const { promisify } = require('util');
 const webpack = require('webpack');
-const merge = require('webpack-merge');
+const { merge } = require('webpack-merge');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin');
 const portfinder = require('portfinder');
 const chalk = require('chalk');
@@ -19,15 +19,15 @@ const baseCssRules = [
   {
     loader: 'css-loader',
     options: {
-      sourceMap: true
-    }
+      sourceMap: true,
+    },
   },
   {
     loader: 'postcss-loader',
     options: {
-      sourceMap: true
-    }
-  }
+      sourceMap: true,
+    },
+  },
 ];
 
 const devWebpackConfig = merge(baseWebpackConfig, {
@@ -36,7 +36,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     rules: [
       {
         test: /\.css$/,
-        use: baseCssRules
+        use: baseCssRules,
       },
       {
         test: /\.scss/,
@@ -46,18 +46,18 @@ const devWebpackConfig = merge(baseWebpackConfig, {
             loader: 'sass-loader',
             options: {
               implementation: require('sass'),
-              sourceMap: true
-            }
-          }
-        ]
-      }
-    ]
+              sourceMap: true,
+            },
+          },
+        ],
+      },
+    ],
   },
   devtool: 'cheap-module-source-map',
   devServer: {
     clientLogLevel: 'warning',
     historyApiFallback: {
-      rewrites: [{ from: /.*/, to: path.posix.join('/', 'index.html') }]
+      rewrites: [{ from: /.*/, to: path.posix.join('/', 'index.html') }],
     },
     hot: true,
     contentBase: false,
@@ -70,14 +70,14 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     proxy: {},
     quiet: true,
     watchOptions: {
-      poll: false
-    }
+      poll: false,
+    },
   },
   plugins: [
     new webpack.DefinePlugin({
       'process.env': {
-        BASE_URL: '"/"'
-      }
+        BASE_URL: '"/"',
+      },
     }),
     new webpack.HotModuleReplacementPlugin(),
     new HtmlWebpackPlugin({
@@ -85,53 +85,57 @@ const devWebpackConfig = merge(baseWebpackConfig, {
       template: path.resolve(__dirname, '../public/index.html'),
       inject: true,
       templateParameters: {
-        BASE_URL: '/'
-      }
+        BASE_URL: '/',
+      },
     }),
-    new CopyWebpackPlugin([
-      {
-        from: path.resolve(__dirname, '../public'),
-        to: '',
-        ignore: ['index.html']
-      }
-    ])
+    new CopyPlugin({
+      patterns: [
+        {
+          from: path.resolve(__dirname, '../public'),
+          to: '',
+          globOptions: {
+            ignore: ['index.html'],
+          },
+        },
+      ],
+    }),
   ],
   optimization: {
     namedModules: true,
-    noEmitOnErrors: true
-  }
+    noEmitOnErrors: true,
+  },
 });
 
 module.exports = new Promise((resolve, reject) => {
   portfinder.basePort = PORT;
   portfinder
     .getPortPromise()
-    .then(port => {
+    .then((port) => {
       devWebpackConfig.devServer.port = port;
 
       promisify(dns.lookup)(os.hostname())
-        .then(res => {
+        .then((res) => {
           const ip = res.address;
 
           devWebpackConfig.plugins.push(
             new FriendlyErrorsPlugin({
               compilationSuccessInfo: {
                 messages: [
-                  chalk`App running at:\n  - Local:   {cyan http://localhost:{bold ${port}/}}\n  - Network: {cyan http://${ip}:{bold ${port}/}}`
-                ]
+                  chalk`App running at:\n  - Local:   {cyan http://localhost:{bold ${port}/}}\n  - Network: {cyan http://${ip}:{bold ${port}/}}`,
+                ],
               },
               onErrors: undefined,
-              clearConsole: true
-            })
+              clearConsole: true,
+            }),
           );
 
           resolve(devWebpackConfig);
         })
-        .catch(err => {
+        .catch((err) => {
           reject(err);
         });
     })
-    .catch(err => {
+    .catch((err) => {
       reject(err);
     });
 });

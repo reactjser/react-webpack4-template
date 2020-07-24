@@ -1,9 +1,10 @@
 const path = require('path');
 const webpack = require('webpack');
-const merge = require('webpack-merge');
+const { merge } = require('webpack-merge');
+const WebpackBar = require('webpackbar');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const baseWebpackConfig = require('./webpack.base.conf');
@@ -13,27 +14,27 @@ const baseCssRules = [
   {
     loader: 'css-loader',
     options: {
-      sourceMap: false
-    }
+      sourceMap: false,
+    },
   },
   {
     loader: 'postcss-loader',
     options: {
-      sourceMap: false
-    }
-  }
+      sourceMap: false,
+    },
+  },
 ];
 
 const webpackConfig = merge(baseWebpackConfig, {
   mode: 'production',
   performance: {
-    hints: false
+    hints: false,
   },
   module: {
     rules: [
       {
         test: /\.css$/,
-        use: baseCssRules
+        use: baseCssRules,
       },
       {
         test: /\.scss/,
@@ -43,27 +44,27 @@ const webpackConfig = merge(baseWebpackConfig, {
             loader: 'sass-loader',
             options: {
               implementation: require('sass'),
-              sourceMap: false
-            }
-          }
-        ]
-      }
-    ]
+              sourceMap: false,
+            },
+          },
+        ],
+      },
+    ],
   },
   devtool: false,
   output: {
     path: path.resolve(__dirname, '../dist'),
-    filename: 'static/js/[name].[chunkhash].js'
+    filename: 'static/js/[name].[chunkhash].js',
   },
   plugins: [
-    new webpack.ProgressPlugin(),
+    new WebpackBar(),
     new webpack.DefinePlugin({
       'process.env': {
-        BASE_URL: '"/"'
-      }
+        BASE_URL: '"/"',
+      },
     }),
     new MiniCssExtractPlugin({
-      filename: 'static/css/[name].[chunkhash].css'
+      filename: 'static/css/[name].[chunkhash].css',
     }),
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../dist/index.html'),
@@ -79,22 +80,26 @@ const webpackConfig = merge(baseWebpackConfig, {
         keepClosingSlash: true,
         minifyJS: true,
         minifyCSS: true,
-        minifyURLs: true
+        minifyURLs: true,
       },
-      chunksSortMode: 'dependency',
+      chunksSortMode: 'auto',
       templateParameters: {
-        BASE_URL: '/'
-      }
+        BASE_URL: '/',
+      },
     }),
     new webpack.NamedChunksPlugin(),
     new webpack.HashedModuleIdsPlugin(),
-    new CopyWebpackPlugin([
-      {
-        from: path.resolve(__dirname, '../public'),
-        to: '',
-        ignore: ['index.html']
-      }
-    ])
+    new CopyPlugin({
+      patterns: [
+        {
+          from: path.resolve(__dirname, '../public'),
+          to: '',
+          globOptions: {
+            ignore: ['index.html'],
+          },
+        },
+      ],
+    }),
   ],
   optimization: {
     splitChunks: {
@@ -104,18 +109,18 @@ const webpackConfig = merge(baseWebpackConfig, {
       maxAsyncRequests: 5,
       maxInitialRequests: 3,
       automaticNameDelimiter: '~',
-      name: true,  // cra set it as false?
+      name: true, // cra set it as false?
       cacheGroups: {
         vendors: {
           test: /[\\/]node_modules[\\/]/,
-          priority: -10
+          priority: -10,
         },
         default: {
           minChunks: 2,
           priority: -20,
-          reuseExistingChunk: true
-        }
-      }
+          reuseExistingChunk: true,
+        },
+      },
     },
     runtimeChunk: true,
     minimizer: [
@@ -126,13 +131,13 @@ const webpackConfig = merge(baseWebpackConfig, {
         terserOptions: {
           compress: {
             warnings: false,
-            drop_console: true
-          }
-        }
+            drop_console: true,
+          },
+        },
       }),
-      new OptimizeCSSAssetsPlugin({})
-    ]
-  }
+      new OptimizeCSSAssetsPlugin({}),
+    ],
+  },
 });
 
 if (process.env.npm_config_report) {
