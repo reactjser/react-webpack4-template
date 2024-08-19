@@ -1,7 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
 const { merge } = require('webpack-merge');
-const WebpackBar = require('webpackbar');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
@@ -51,13 +50,13 @@ const webpackConfig = merge(baseWebpackConfig, {
       },
     ],
   },
+  // devtool: 'source-map',
   devtool: false,
   output: {
     path: path.resolve(__dirname, '../dist'),
     filename: 'static/js/[name].[chunkhash].js',
   },
   plugins: [
-    new WebpackBar(),
     new webpack.DefinePlugin({
       'process.env': {
         BASE_URL: '"/"',
@@ -87,21 +86,22 @@ const webpackConfig = merge(baseWebpackConfig, {
         BASE_URL: '/',
       },
     }),
-    new webpack.NamedChunksPlugin(),
-    new webpack.HashedModuleIdsPlugin(),
     new CopyPlugin({
       patterns: [
         {
           from: path.resolve(__dirname, '../public'),
           to: '',
           globOptions: {
-            ignore: ['index.html'],
+            ignore: ['**/index.html'],
           },
         },
       ],
     }),
   ],
   optimization: {
+    moduleIds: 'named', // 使用有意义的名称替代长的哈希值
+    chunkIds: 'named', // 为 chunk 使用有意义的名称
+    minimize: true,  // 启用最小化
     splitChunks: {
       chunks: 'all',
       minSize: 30000,
@@ -109,7 +109,7 @@ const webpackConfig = merge(baseWebpackConfig, {
       maxAsyncRequests: 5,
       maxInitialRequests: 3,
       automaticNameDelimiter: '~',
-      name: true, // cra set it as false?
+      name: false,
       cacheGroups: {
         vendors: {
           test: /[\\/]node_modules[\\/]/,
@@ -125,9 +125,7 @@ const webpackConfig = merge(baseWebpackConfig, {
     runtimeChunk: true,
     minimizer: [
       new TerserPlugin({
-        cache: true,
         parallel: true,
-        sourceMap: false, // Must be set to true if using source-maps in production
         terserOptions: {
           compress: {
             warnings: false,

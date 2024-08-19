@@ -3,6 +3,7 @@ const os = require('os');
 const dns = require('dns');
 const { promisify } = require('util');
 const webpack = require('webpack');
+const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const { merge } = require('webpack-merge');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
@@ -55,22 +56,31 @@ const devWebpackConfig = merge(baseWebpackConfig, {
   },
   devtool: 'cheap-module-source-map',
   devServer: {
-    clientLogLevel: 'warning',
-    historyApiFallback: {
-      rewrites: [{ from: /.*/, to: path.posix.join('/', 'index.html') }],
-    },
+    // historyApiFallback: {
+    //   rewrites: [{ from: /.*/, to: path.posix.join('/', 'index.html') }],
+    // },
     hot: true,
-    contentBase: false,
     compress: true,
     host: HOST,
     port: PORT,
     open: false,
-    overlay: { warnings: false, errors: true },
-    publicPath: '/',
-    proxy: {},
-    quiet: true,
-    watchOptions: {
-      poll: false,
+    // static: {
+    //   directory: path.join(__dirname, 'public'),
+    //   publicPath: '/', // 配置静态资源路径前缀
+    // },
+    proxy: [],
+    client: {
+      logging: 'warn', // 仅输出警告及错误信息
+      overlay: { warnings: false, errors: true },
+    },
+    static: {
+      directory: path.join(__dirname, 'dist'),
+      watch: {
+        // 开启轮询
+        poll: 1000, // 以毫秒为单位的间隔检查文件变更
+        // 忽略 node_modules 目录
+        ignored: /node_modules/,
+      },
     },
   },
   plugins: [
@@ -79,7 +89,8 @@ const devWebpackConfig = merge(baseWebpackConfig, {
         BASE_URL: '"/"',
       },
     }),
-    new webpack.HotModuleReplacementPlugin(),
+    // new webpack.HotModuleReplacementPlugin(),
+    new ReactRefreshWebpackPlugin(),
     new HtmlWebpackPlugin({
       filename: 'index.html',
       template: path.resolve(__dirname, '../public/index.html'),
@@ -94,15 +105,14 @@ const devWebpackConfig = merge(baseWebpackConfig, {
           from: path.resolve(__dirname, '../public'),
           to: '',
           globOptions: {
-            ignore: ['index.html'],
+            ignore: ['**/index.html'],
           },
         },
       ],
     }),
   ],
   optimization: {
-    namedModules: true,
-    noEmitOnErrors: true,
+    moduleIds: 'named',
   },
 });
 
